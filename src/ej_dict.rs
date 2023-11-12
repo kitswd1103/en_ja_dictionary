@@ -27,7 +27,7 @@ impl DictionaryDb  {
             if path.is_empty() { "./db/ejdict.sqlite3" }
             else { path };
 
-        let mut ret = Self { db: Connection::open(&path)? };
+        let ret = Self { db: Connection::open(path)? };
         ret.create_user_table()?;
         Ok(ret)
     }
@@ -53,7 +53,7 @@ impl DictionaryDb  {
     pub fn delete_word(&self, word: &str) -> rusqlite::Result<()>{
         self.db.execute(
             "DELETE FROM user WHERE word = ? COLLATE NOCASE",
-            &[word],
+            [word],
         )?;
         Ok(())
     }
@@ -73,7 +73,7 @@ impl DictionaryDb  {
     }
 
     pub fn display_user_table_contents(&self) -> rusqlite::Result<()> {
-        let mut stmt = self.db.prepare(format!("SELECT * FROM user").as_str())?;
+        let mut stmt = self.db.prepare("SELECT * FROM user")?;
         let rows = stmt.query_map([], |row| {
             Ok(DictionaryItem {
                 word: row.get(1).unwrap_or_default(),
