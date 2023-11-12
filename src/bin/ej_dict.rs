@@ -11,7 +11,7 @@ fn main() {
     let open_db = DictionaryDb::open_db("");
     let db = open_db.unwrap();
     for word in text_split(text) {
-        let items = (word.clone(), db.get_items(word.as_str()));
+        let items = (word.clone(), db.get_items(word.as_str()).expect("データ読み込み失敗"));
         println!("{}", items.0);
         for item in items.1 {
             println!("\t{}", item);
