@@ -8,12 +8,16 @@ pub struct DictionaryDb {
 }
 
 impl DictionaryDb  {
-    const QUERY_FORMAT: &str = r"SELECT word, mean, level FROM items
+    const QUERY_SEARCH_FORMAT: &str = r"SELECT word, mean, level FROM items
     WHERE word LIKE '%__SEARCH_WORD__%'
     ORDER BY CASE WHEN word = '__SEARCH_WORD__' THEN 0 ELSE 1 END, level DESC
     LIMIT 3";
-    const QUERY_REPLACE_WORD: &str = "__SEARCH_WORD__";
+    const QUERY_SEACH_REPLACE_WORD: &str = "__SEARCH_WORD__";
 
+    fn create_query_search(word: &str) -> String {
+        Self::QUERY_SEARCH_FORMAT.replace(Self::QUERY_SEACH_REPLACE_WORD, word)
+    }
+    
     pub fn open_db(path: &str) -> Result<Self, rusqlite::Error> {
         let path = 
             if path.is_empty() { "./db/ejdict.sqlite3" }
@@ -23,7 +27,7 @@ impl DictionaryDb  {
     }
 
     pub fn get_items(&self, word: &str) -> Vec<DictionaryItem> {
-        let mut items = self.db.prepare(Self::QUERY_FORMAT.replace(Self::QUERY_REPLACE_WORD, word).as_str()).unwrap();
+        let mut items = self.db.prepare(Self::create_query_search(word).as_str() ).unwrap();
         let items = items.query_map([], |row| { 
             let word = row.get(0);
             let mean = row.get(1);
