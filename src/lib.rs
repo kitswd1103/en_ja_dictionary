@@ -6,6 +6,7 @@ pub fn text_split(text: String) -> Vec<String> {
 
     let mut temp = String::new();
     let mut in_quote = false;
+    let text = text.replace("\r", "");
 
     for c in text.chars() {
         if c == '\"' {
@@ -32,7 +33,7 @@ pub fn text_split(text: String) -> Vec<String> {
 }
 
 pub(crate) fn is_delimiter(c: char) -> bool {
-    c == ' ' || c == ',' || c == '.' || c == '\"'
+    c == ' ' || c == ',' || c == '.' || c == '\"' || c == '\n'
 }
 
 #[cfg(test)]
