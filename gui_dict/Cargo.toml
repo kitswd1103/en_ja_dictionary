@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 egui = "0.23.0"
 eframe = "0.23.0"
-#egui_tiles = "0.3.1"
+en_ja_dictionary ={ path = "../" }

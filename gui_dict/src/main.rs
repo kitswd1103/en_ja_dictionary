@@ -3,6 +3,8 @@ use std::{io::{Read, self}, fs, path::Path};
 use eframe::egui;
 use egui::{Visuals, Style};
 
+use en_ja_dictionary::{*, ej_dict::DictionaryItem};
+
 const FONT_DIR: &str = "./fonts";
 
 fn main() -> Result<(), eframe::Error> {
@@ -21,6 +23,14 @@ struct EnJaDictionay {
     font_index: usize,
     font_list: Vec<(String, String)>,
     text: String,
+    db: DictDB,
+    word_list: Vec<String>,
+    dict_items: Vec<DictionaryItem>,
+}
+
+enum DictDB {
+    Opened(ej_dict::DictionaryDb),
+    Unopened
 }
 
 impl EnJaDictionay {
@@ -33,11 +43,27 @@ impl EnJaDictionay {
             println!("フォント一覧の取得に失敗しました");
         }
 
+        let db = ej_dict::DictionaryDb::open_db("");
+        let db = if db.is_ok() {
+            DictDB::Opened(db.unwrap())
+        } else {
+            println!("dbの接続に失敗しました。");
+            DictDB::Unopened
+        };
+
+        match db {
+            DictDB::Unopened => {},
+            _ => {}
+        }
+
         // TODO: フォントの設定の保存及び読み込み機能を作成する;
         EnJaDictionay {
             font_index: 0,
             font_list,
-            text: String::from("")
+            text: String::from(""),
+            db: db,
+            word_list: Vec::new(),
+            dict_items: Vec::new()
         }
     }
     
@@ -78,6 +104,14 @@ impl EnJaDictionay {
         ctx.set_fonts(fonts);
         Some(())
     }
+    fn get_dict_items(&self, word: &str) -> Vec<DictionaryItem> {
+        match &self.db {
+            DictDB::Opened(db) => {
+                db.get_items(word).unwrap_or_default()
+            },
+            _ => Vec::new()
+        }
+    }
 }
 
 impl eframe::App for EnJaDictionay {
@@ -102,13 +136,33 @@ impl eframe::App for EnJaDictionay {
 
             if response.changed() {
                 self.text = text.to_string();
+                self.word_list = text_split(self.text.to_owned());
             }
         });
         egui::SidePanel::left("word_list").resizable(true).show(ctx, |ui| {
             ui.label("word list");
+            egui::ScrollArea::vertical()
+                .show(ui, |ui| {
+                    ui.with_layout(egui::Layout::top_down_justified(egui::Align::Center), |ui| {
+                        for word in &self.word_list {
+                            if ui.button(word).clicked() {
+                                self.dict_items = self.get_dict_items(word);
+                            }
+                        }
+                    })
+                });
         });
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("means");
+            egui::ScrollArea::vertical()
+            .show(ui, |ui| {
+                ui.with_layout(egui::Layout::top_down_justified(egui::Align::Center), |ui| {
+                    for item in &self.dict_items {
+                        ui.label(item.word.to_owned());
+                        ui.label(item.mean.to_owned());
+                        ui.label(item.user_mean.to_owned());
+                    }
+                })
+            });
         });
     }
 
